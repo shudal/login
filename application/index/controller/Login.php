@@ -9,13 +9,7 @@ use think\Request;
 
 class Login extends Controller
 {
-    /**
-     * 显示资源列表
-     *
-     * @return \think\Response
-     */
-  public function index(){
-    $private_key='-----BEGIN RSA PRIVATE KEY-----
+	var $private_key='-----BEGIN RSA PRIVATE KEY-----
 MIICWwIBAAKBgQC8xDeHjWG2pFuK8gMoLEZ/bm+VH8L/hYFZJPztoiV0aKP5phRD
 MZhtPcUFuOjDRddvu/u+3Wj9HB+MJevscpw2AwpvJJeickrhABl79udBVOcRMSBP
 wKF00xNoHevbORQU03a/PQqUiTMIkmT/k4NavRKo0OUMeTQcSWEQMAokbQIDAQAB
@@ -30,15 +24,23 @@ G6J22IcEujP1/Qc0Er/bjXXRTdxiDXYwhvt2aQrLIpcbnwekuK6t9XEGHwJAWD5n
 YUzKULGaleost3RcywJAGv8AeJDBVmmWx/TzEX8Yampv/hyyuh1QYvSKigNPoW3W
 sRRPR8xTnD+yif7kKXCfDv0/0PY7GvNpOvlaHHnx7w==
 -----END RSA PRIVATE KEY-----';
-	$public_key='-----BEGIN PUBLIC KEY-----
+	var $public_key='-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCwupSfmDUStGkQuFQ8Mu/ePULd
 OS9E//QN1RMfKuR/ss80VMVMjgY85WVX6oRkIn8hGfCJE3XTPBfRxAa0wV2kZQnj
 ovAABcLsO0clPnNY8rytEV5vco0emrdxJv9oPw5uSXCjix9qLgHv7OfrvaJhx2MF
 B5yeR90WrUBvdvHoZwIDAQAB
 -----END PUBLIC KEY-----';
-$pi_key = openssl_pkey_get_private($private_key);
-$pu_key = openssl_pkey_get_public($public_key);
-    $encrypted=request()->param("str");
+   
+    /**
+     * 显示资源列表
+     *
+     * @return \think\Response
+     */
+  public function index(){
+      $pi_key = openssl_pkey_get_private($this->private_key);
+      $pu_key = openssl_pkey_get_public($this->public_key);
+
+        $encrypted=request()->param("str");
     //传输中+号被转换成了空格，现在需要换回来
     $encrypted = str_replace(" ","+",$encrypted);
       $decrypted="";
@@ -95,7 +97,35 @@ $pu_key = openssl_pkey_get_public($public_key);
      */
     public function create()
     {
-      
+      $pi_key = openssl_pkey_get_private($this->private_key);
+      $pu_key = openssl_pkey_get_public($this->public_key);
+
+      $encrypted=request()->param("str");
+      $encrypted=str_replace(" ","+",$encrypted);
+
+      $decrypted="";
+      openssl_private_decrypt(base64_decode($encrypted),$decrypted,$pi_key);
+
+      $regisI=explode("&",$decrypted);
+      $username=substr($regisI[0],9);
+      $password=substr($regisI[1],9);
+      $password=hash("sha256",$password);
+      $nickname=substr($regisI[2],9);
+
+      $users=Account::where("username",'=',$username)->select();
+      if(count($users)){
+        return json(["flag"=>"failure","description"=>"用户名已存在"]);
+      }
+
+      $account = new Account;
+      $account->username=$username;
+      $account->password=$password;
+      $account->create_time=strtotime("now");
+      $account->save();
+
+      return json(["flag"=>"success"]);
+
+
     }
 
     /**
