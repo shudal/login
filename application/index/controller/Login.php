@@ -32,7 +32,11 @@ OS9E//QN1RMfKuR/ss80VMVMjgY85WVX6oRkIn8hGfCJE3XTPBfRxAa0wV2kZQnj
 ovAABcLsO0clPnNY8rytEV5vco0emrdxJv9oPw5uSXCjix9qLgHv7OfrvaJhx2MF
 B5yeR90WrUBvdvHoZwIDAQAB
 -----END PUBLIC KEY-----';
-  public function index(){
+public function index(){
+
+      if(!request()->isPost){
+        return json(["flag"=>"failure","description"=>"请求方法错误"]);
+      }
       $pi_key = openssl_pkey_get_private($this->private_key);
       $pu_key = openssl_pkey_get_public($this->public_key);
 
@@ -77,6 +81,9 @@ B5yeR90WrUBvdvHoZwIDAQAB
 
     public function create()
     {
+      if(!request()->isPost()){
+        return json(["flag"=>"failure","description"=>"请求方法错误"]);;
+      }
       $pi_key = openssl_pkey_get_private($this->private_key);
       $pu_key = openssl_pkey_get_public($this->public_key);
 
@@ -110,6 +117,7 @@ B5yeR90WrUBvdvHoZwIDAQAB
 
     public function read()
     {
+
       $id=request()->param('id');
       try{
         $user = User_online::get($id);
